@@ -1,137 +1,114 @@
 #include <iostream>
-#include <map>
 #include <string>
+#include <map>
 #include <vector>
-#include <sstream>
 
-using namespace std;
+class Error {
+	std::string inf;
+public:
+	Error(std::string str) {
+		inf = str;
+	}
+	std::string what() {
+		return inf;
+	}
+};
 
-class Base
-{
+
+class Base {
 protected:
-    int value;
-public:
-    Base(int val) : value(val) {}
-    virtual void show() = 0;
+	int value;
+public: 
+	Base(int val) :value(val) {}
+	virtual void show() = 0;
 };
 
-class A : public Base
-{
+class A :public Base {
 public:
-    A(int val) : Base(val) {}
-    void show() { cout << "class A: " << value << endl; }
+	A(int val) :Base(val) {}
+	void show() { std::cout << "class A: " << value << '\n';}
 };
 
-class B : public Base
-{
+class B :public Base {
 public:
-    B(int val) : Base(val) {}
-    void show() { cout << "class B: " << value << endl; }
+	B(int val) :Base(val) {}
+	void show() { std::cout << "class B: " << value << '\n'; }
 };
 
-class C : public Base
-{
+class C :public Base {
 public:
-    C(int val) : Base(val) {}
-    void show() { cout << "class C: " << value << endl; }
+	C(int val) :Base(val) {}
+	void show() { std::cout << "class C: " << value << '\n'; }
 };
 
-vector<Base*> objects;
+std::vector<Base* > List;
 
-class Functor
-{
+class Functor {
 public:
-    virtual void operator()() {};
-    virtual void operator()(string, int) {};
+	virtual void operator()() {};
+	virtual void operator()(std::string, int) {};
 };
 
-class FunctorShow : public Functor
-{
+class FunctorShow :public Functor {
 public:
-    FunctorShow() {};
-    void operator()();
+	FunctorShow() {};
+	void operator() ();
 };
 
-class FunctorCreate : public Functor
-{
+class FunctorCreate :public Functor {
 public:
-    FunctorCreate() {};
-    void operator()(string classname, int value);
+	FunctorCreate() {};
+	void operator()(std::string classname, int value);
 };
 
-vector<string> split(const string &s, char delim);
+std::map <int, Functor*> mfunc;
 
-int main()
-{
-    map<string, Functor*> mfunc;
-    Functor *fshow = new FunctorShow;
-    Functor *fcreate = new FunctorCreate;
-    mfunc["showall"] = fshow;
-    mfunc["create"] = fcreate;
-    string expression;
-    vector<string> expressions;
-    Functor *fctr;
-    int N;
-    cout << "N = ";
-    cin >> N;
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    
-    for (int i = 1; i <= N; i++)
-    {
-        cout << i << '>';
-        getline(cin, expression);
-        expressions = split(expression, ' ');
-        fctr = mfunc[expressions[0]];
-        
-        if (fctr == nullptr)
-        {
-            cout << "Incorrect operation\n";
-            i--; continue;
-        }
-        
-        if (expressions.size() == 1)
-            (*fctr)();
-        else if (expressions.size() == 3)
-            (*fctr)(expressions[1], stoi(expressions[2]));
-        else
-        {
-            cout << "Incorrect operation\n"; i--;
-        }
-    }
-    
-    system("pause");
-    return 0;
+int main() {
+	try {
+		Functor* FS = new FunctorShow;
+		Functor* FC = new FunctorCreate;
+		mfunc[0] = FS;
+		mfunc[1] = FC;
+
+		size_t N;
+		std::cin >> N;
+		for (size_t i = 0; i < N; i++) {
+			std::string str;
+			std::cin >> str;
+			if (str == "create") {
+				std::string classname;
+				int val;
+				std::cin >> classname >> val;
+				Functor* ptr1 = mfunc[1];
+				(*ptr1)(classname, val);
+			}
+			else if (str == "showall") {
+				Functor* ptr2 = mfunc[0];
+				(*ptr2)();
+			}
+		}
+	}
+	catch (Error& e) {
+		std::cout << e.what() << '\n';
+	}
+
+	system("pause");
+	return 0;
 }
 
-void FunctorCreate::operator()(string classname, int value)
-{
-    Base* base;
-    
-    if (classname == "A")
-        base = new A(value);
-    else if (classname == "B")
-        base = new B(value);
-    else if (classname == "C")
-        base = new C(value);
-    else return;
-    
-    objects.push_back(base);
+void FunctorCreate::operator() (std::string classname, int value) {
+	Base* base;
+	if (classname == "A")
+		base = new A(value);
+	else if (classname == "B")
+		base = new B(value);
+	else if (classname == "C")
+		base = new C(value);
+	else throw Error("NO such class");
+	List.push_back(base);
 }
 
-void FunctorShow::operator()()
-{
-    for (auto it : objects)
-        it->show();
-}
-
-vector<string> split(const string &s, char delim)
-{
-    vector<string> elems;
-    stringstream ss(s);
-    string item;
-    
-    while (getline(ss, item, delim))
-        elems.push_back(item);
-    
-    return elems;
+void FunctorShow::operator() () {
+	for (size_t i = 0; i < List.size(); i++)
+		List[i]->show();
 }
